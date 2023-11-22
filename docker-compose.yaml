@@ -1,0 +1,64 @@
+version: '3'
+services:
+  customer-service:
+    image: customer-service
+    container_name: customer-service
+    ports:
+      - "9090:9090"
+    networks:
+      - elk-network
+    environment:
+      - LOGSTASH_HOST=logstash
+
+  notification-service:
+    image: notification-service
+    container_name: notification-service
+    ports:
+      - "9595:9595"
+    networks:
+      - elk-network
+    environment:
+      - LOGSTASH_HOST=logstash
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elk-network
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.13
+    container_name: logstash
+    ports:
+      - "5000:5000"
+      - "5200:5200"
+    volumes:
+      - ./conf/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./conf:/usr/share/logstash/config
+      - ./conf/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+#      - ./logs:/usr/share/logstash/logs
+    command: ["-f", "/usr/share/logstash/config/logstash.conf"]
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.13
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      - logstash
+    networks:
+      - elk-network
+
+networks:
+  elk-network:
+    driver: bridge

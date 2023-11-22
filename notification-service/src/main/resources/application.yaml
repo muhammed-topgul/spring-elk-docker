@@ -1,0 +1,14 @@
+server:
+  port: 9595
+
+spring:
+  application:
+    name: notification-service
+
+
+logging:
+  file:
+    name: ./logs/notification-service.log
+
+logstash:
+  host: ${LOGSTASH_HOST:localhost}
